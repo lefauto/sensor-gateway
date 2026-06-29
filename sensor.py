@@ -1,11 +1,16 @@
 import time
 import random
 import requests
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ===================== CONFIGURAÇÕES DE REDE =====================
 # Troque pelo IP local real do seu PC Gateway na rede do laboratório.
-GATEWAY_IP = "10.2.179.36"
-PORTA = "5000"
+GATEWAY_IP = os.getenv("GATEWAY_IP", "0.0.0.0")
+PORTA = os.getenv("PORTA", "8000")
 
 URL_POST_SENSOR = f"http://{GATEWAY_IP}:{PORTA}/api/sensor"
 
