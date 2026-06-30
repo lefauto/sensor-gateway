@@ -36,7 +36,7 @@ except Exception as e:
 
 
 def conectar_lavinmq():
-    """Cria uma conexão/canal novo com o LavinMQ a partir da URL de conexão (AMQP)."""
+    """Cria uma conexão/canal novo com o LavinMQ."""
     parametros = pika.URLParameters(CLOUDAMQP_URL)
     conexao = pika.BlockingConnection(parametros)
     canal = conexao.channel()

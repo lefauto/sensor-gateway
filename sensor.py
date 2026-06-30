@@ -5,23 +5,20 @@ import os
 
 from dotenv import load_dotenv
 
+# ===================== DEFININDO AMBIENTE =====================
 load_dotenv()
 
+random.seed() # Sem semente fixa para gerar valores mais imprevisíveis a cada execução
+
 # ===================== CONFIGURAÇÕES DE REDE =====================
-# Troque pelo IP local real do seu PC Gateway na rede do laboratório.
 GATEWAY_IP = os.getenv("GATEWAY_IP", "0.0.0.0")
 PORTA = os.getenv("PORTA", "8000")
 
 URL_POST_SENSOR = f"http://{GATEWAY_IP}:{PORTA}/api/sensor"
 
-SENSOR_ID = "sensor_distancia"  # identificador caso houvessem múltiplos sensores
-# SENSOR_ID = 1
-
-# Inicializa a semente aleatória para consistência matemática
-random.seed(42)
-
-
 # ===================== EMULAÇÃO DO SENSOR (DISTÂNCIA) =====================
+SENSOR_ID = "sensor_distancia_1"  # Identificador único caso houvessem múltiplos sensores
+
 def gerar_distancia_simulada():
     """Gera uma distância simulada (sensor ultrassônico), inteira, entre 0 e 4 metros."""
     return random.randint(0, 4)
