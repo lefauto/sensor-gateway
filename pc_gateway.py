@@ -21,18 +21,15 @@ CLOUDAMQP_URL = os.getenv("CLOUDAMQP_URL", "")
 QUEUE_SENSOR = os.getenv("QUEUE_SENSOR", "")
 
 # ===================== CONEXÕES =====================
-try:
-    r = redis_async.Redis(
+def criar_cliente_redis():
+    """Cria um cliente Redis assíncrono ligado ao loop atual."""
+    return redis_async.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
         password=REDIS_PASSWORD,
         decode_responses=True,
-        socket_connect_timeout=5
+        socket_connect_timeout=5,
     )
-    print(f"[REDIS] Conexão Estabelecida!")
-except Exception as e:
-    print(f"[ERRO CONEXÃO REDIS] {e}")
-    exit()
 
 
 def conectar_lavinmq():
@@ -69,9 +66,13 @@ async def publicar_na_fila(payload: dict):
 
 async def atualizar_redis(valor: float):
     """Atualiza o valor mais recente da distância no Redis Cloud."""
-    await r.set(REDIS_KEY, valor)
-    await r.set(f"{REDIS_KEY}:timestamp", datetime.now(timezone.utc).isoformat())
-    print(f"[GATEWAY->REDIS] Chave '{REDIS_KEY}' atualizada com valor: {valor}")
+    cliente_redis = criar_cliente_redis()
+    try:
+        await cliente_redis.set(REDIS_KEY, valor)
+        await cliente_redis.set(f"{REDIS_KEY}:timestamp", datetime.now(timezone.utc).isoformat())
+        print(f"[GATEWAY->REDIS] Chave '{REDIS_KEY}' atualizada com valor: {valor}")
+    finally:
+        await cliente_redis.aclose()
 
 
 # ===================== ROTAS HTTP =====================
@@ -93,7 +94,7 @@ async def receber_sensor():
     payload_fila = {
         "sensor_id": sensor_id,
         "valor": valor,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     try:
