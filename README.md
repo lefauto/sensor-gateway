@@ -70,7 +70,7 @@ REDIS_KEY=sua_chave
 CLOUDAMQP_URL=url_de_seu_amqp
 QUEUE_SENSOR=sua_fila
 
-GATEWAY_IP=seu_ip_especifico
+GATEWAY_IP=seu_ip_especifico_do_gateway
 PORTA=sua_porta
 ```
 
@@ -86,7 +86,7 @@ O gateway ficará escutando em `localhost` por padrão (o host e a porta estão 
 
 ### 2. Iniciar o Emulador de Sensor
 
-Em outro terminal, execute:
+Em outro nó (outro computador), execute:
 
 ```bash
 python sensor.py
