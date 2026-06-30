@@ -1,11 +1,12 @@
+import asyncio
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 import pika
-import redis
+import redis.asyncio as redis_async
 
 app = Flask(__name__)
 load_dotenv()
@@ -20,13 +21,18 @@ CLOUDAMQP_URL = os.getenv("CLOUDAMQP_URL", "")
 QUEUE_SENSOR = os.getenv("QUEUE_SENSOR", "")
 
 # ===================== CONEXÕES =====================
-r = redis.Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    password=REDIS_PASSWORD,
-    decode_responses=True,
-    ssl=True,  # Redis Cloud normalmente exige TLS; remova se seu plano não usar
-)
+try:
+    r = redis_async.Redis(
+        host=REDIS_HOST,
+        port=REDIS_PORT,
+        password=REDIS_PASSWORD,
+        decode_responses=True,
+        socket_connect_timeout=5
+    )
+    print(f"[REDIS] Conexão Estabelecida!")
+except Exception as e:
+    print(f"[ERRO CONEXÃO REDIS] {e}")
+    exit()
 
 
 def conectar_lavinmq():
@@ -38,8 +44,8 @@ def conectar_lavinmq():
     return conexao, canal
 
 
-def publicar_na_fila(payload: dict):
-    """Publica a leitura do sensor na fila do LavinMQ."""
+def _publicar_na_fila_sync(payload: dict):
+    """Publica a leitura do sensor na fila do LavinMQ usando conexão síncrona."""
     conexao, canal = conectar_lavinmq()
     try:
         canal.basic_publish(
@@ -56,16 +62,21 @@ def publicar_na_fila(payload: dict):
         conexao.close()
 
 
-def atualizar_redis(valor: float):
+async def publicar_na_fila(payload: dict):
+    """Publica a leitura do sensor na fila do LavinMQ sem bloquear o loop de eventos."""
+    await asyncio.to_thread(_publicar_na_fila_sync, payload)
+
+
+async def atualizar_redis(valor: float):
     """Atualiza o valor mais recente da distância no Redis Cloud."""
-    r.set(REDIS_KEY, valor)
-    r.set(f"{REDIS_KEY}:timestamp", datetime.utcnow().isoformat())
+    await r.set(REDIS_KEY, valor)
+    await r.set(f"{REDIS_KEY}:timestamp", datetime.now(timezone.utc).isoformat())
     print(f"[GATEWAY->REDIS] Chave '{REDIS_KEY}' atualizada com valor: {valor}")
 
 
 # ===================== ROTAS HTTP =====================
 @app.route("/api/sensor", methods=["POST"])
-def receber_sensor():
+async def receber_sensor():
     """
     Recebe a leitura do sensor via POST.
     Payload esperado: {"sensor_id": "...", "valor": 3}  (valor em metros, inteiro 0-4)
@@ -87,14 +98,14 @@ def receber_sensor():
 
     try:
         # 1) Publica no LavinMQ (mensageria assíncrona compartilhada)
-        publicar_na_fila(payload_fila)
+        await publicar_na_fila(payload_fila)
     except Exception as e:
         print(f"[ERRO LAVINMQ] {e}")
         return jsonify({"erro": f"Falha ao publicar no LavinMQ: {e}"}), 500
 
     try:
         # 2) Atualiza o Redis Cloud (cache do último valor)
-        atualizar_redis(valor)
+        await atualizar_redis(valor)
     except Exception as e:
         print(f"[ERRO REDIS] {e}")
         return jsonify({"erro": f"Falha ao atualizar Redis: {e}"}), 500
