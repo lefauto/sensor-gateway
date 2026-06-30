@@ -20,8 +20,8 @@ URL_POST_SENSOR = f"http://{GATEWAY_IP}:{PORTA}/api/sensor"
 SENSOR_ID = "sensor_distancia_1"  # Identificador único caso houvessem múltiplos sensores
 
 def gerar_distancia_simulada():
-    """Gera uma distância simulada (sensor ultrassônico), inteira, entre 0 e 4 metros."""
-    return random.randint(0, 4)
+    """Gera uma distância simulada (sensor ultrassônico), inteira, entre 0 e 9 metros."""
+    return random.randint(0, 9)
 
 
 def enviar_distancia(distancia):

@@ -102,7 +102,7 @@ Payload esperado:
 
 ```json
 {
-  "sensor_id": "sensor_distancia_1",
+  "sensor_id": "sensor_distancia_1", /*Se for simular mais de um sensor, acrescente +1 ao número*/
   "valor": 3
 }
 ```
