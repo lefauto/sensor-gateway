@@ -20,6 +20,8 @@ REDIS_KEY = os.getenv("REDIS_KEY", "")
 CLOUDAMQP_URL = os.getenv("CLOUDAMQP_URL", "")
 QUEUE_SENSOR = os.getenv("QUEUE_SENSOR", "")
 
+GATEWAY_IP = os.getenv("GATEWAY_IP", "0.0.0.0")
+
 # ===================== CONEXÕES =====================
 def criar_cliente_redis():
     """Cria um cliente Redis assíncrono ligado ao loop atual."""
@@ -118,4 +120,4 @@ if __name__ == "__main__":
     print("=" * 55)
     print(" Iniciando PC Gateway (Nó de Borda)")
     print("=" * 55)
-    app.run(host="10.2.179.36", port=5000)
+    app.run(host=GATEWAY_IP, port=5000)
